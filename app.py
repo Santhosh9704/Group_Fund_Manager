@@ -89,11 +89,31 @@ def get_db():
         db_path = DB_NAME
         if IS_VERCEL:
             db_path = "/tmp/database.db"
-            # We might need to copy our schema or init it if it doesn't exist
-            # But the init route handles that.
             
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
+        
+        # Auto-init for Vercel ephemeral storage
+        # logic: missing tables -> crash on login. Check and init if needed.
+        if IS_VERCEL:
+            try:
+                # Check for members table
+                conn.execute("SELECT 1 FROM members LIMIT 1")
+            except sqlite3.OperationalError:
+                # Table missing, initialize schema
+                schema_path = "schema.sql"
+                if os.path.exists(schema_path):
+                    with open(schema_path, "r") as f:
+                        conn.executescript(f.read())
+                    
+                    # Seed Admin & Fund
+                    conn.execute("INSERT INTO fund (total_balance) VALUES (20000)")
+                    conn.execute("""
+                        INSERT INTO members (name, username, password, role, join_date)
+                        VALUES (?, ?, ?, 'admin', ?)
+                    """, ("Super Admin", "admin", "admin123", datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                    conn.commit()
+
         return DBWrapper(conn, 'sqlite')
 
 def format_currency(value):
