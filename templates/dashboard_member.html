@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Dashboard - Finance App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>🏦</span> FinanceGroup
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <span style="color: var(--text-muted)">Welcome, {{ user_name }}</span>
+                <a href="/chat" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem;">💬 Community Chat</a>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <header style="margin-bottom: 2rem;">
+            <h1>My Financial Overview</h1>
+        </header>
+
+        {% if alerts %}
+        <div style="margin-bottom: 2rem;">
+            {% for alert in alerts %}
+            <div class="card"
+                style="margin-bottom: 1rem; border-left: 5px solid {{ '#eab308' if alert.type == 'warning' else '#3b82f6' }}; background: rgba(30, 41, 59, 0.8);">
+                <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                    <div style="font-size: 1.5rem;">{{ '⚠️' if alert.type == 'warning' else 'ℹ️' }}</div>
+                    <div>
+                        <h3
+                            style="color: {{ '#eab308' if alert.type == 'warning' else '#60a5fa' }}; margin-bottom: 0.25rem;">
+                            {{ alert.title }}</h3>
+                        <p style="color: var(--text-main);">{{ alert.message }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Group Total Fund</span>
+                    <span class="stat-value">{{ balance | currency }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">My Total Savings</span>
+                    <span class="stat-value" style="color: #eab308;">{{ my_total_savings | currency }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">My Active Loan</span>
+                    <span class="stat-value" style="color: #fca5a5;">{{ my_active_loans_amount | currency }}</span>
+                </div>
+            </div>
+
+            <div class="card"
+                style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <h3>Need Funds?</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Request a loan with our low interest rates.
+                </p>
+                <a href="/request_loan" class="btn" style="width: 100%; margin-bottom: 0.5rem;">Apply for Loan</a>
+                <a href="/submit_payment_proof" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">📸
+                    Submit Payment Proof (EMI/Savings)</a>
+                <a href="/loan_tracking" class="btn btn-secondary btn-sm" style="width: 100%;">View All Member Loans</a>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3>My Loan History</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Borrowed</th>
+                            <th>Interest/Mo</th>
+                            <th>Total Months</th>
+                            <th>Status</th>
+                            <th>Payment Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans %}
+                        <tr>
+                            <td style="font-weight: 500; color: #fff;">{{ loan.amount | currency }}</td>
+                            <td>
+                                {% if loan.status == 'approved' and loan.repayment_status == 'open' %}
+                                <span style="color: #4ade80; font-weight: bold;">{{ loan.next_emi_amount | currency
+                                    }}</span>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Month {{
+                                    loan.next_payment_month }}</div>
+                                {% else %}
+                                {{ loan.interest_per_month | currency }}/mo (Base)
+                                {% endif %}
+                            </td>
+                            <td>{{ loan.total_months }}</td>
+                            <td>
+                                <span class="badge badge-{{ loan.status }}">{{ loan.status }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ 'active' if loan.repayment_status == 'open' else 'paid' }}">
+                                    {{ loan.repayment_status }}
+                                </span>
+                            </td>
+                            <td>{{ loan.request_time[:10] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted)">No loan history found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>My Monthly Contributions</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date Paid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contributions %}
+                        <tr>
+                            <td>{{ c.year }}</td>
+                            <td>{{ c.month }}</td>
+                            <td>{{ c.amount | currency }}</td>
+                            <td><span class="badge badge-paid">{{ c.status }}</span></td>
+                            <td>{{ c.paid_date[:10] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted)">No contributions
+                                recorded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

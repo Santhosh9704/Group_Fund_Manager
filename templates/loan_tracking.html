@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Transparency Board - Finance App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>📊</span> Loan Tracker
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="/dashboard" class="btn btn-secondary btn-sm">← Back to Dashboard</a>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <header style="margin-bottom: 2rem;">
+            <h1>Community Loan Tracker</h1>
+            <p style="color: var(--text-muted)">Transparency board for all active and closed loans within the group.</p>
+        </header>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Principal Amount</th>
+                            <th>EMI (P+I)</th>
+                            <th>Interest/Month</th>
+                            <th>Remaining Bal</th>
+                            <th>Status</th>
+                            <th>Repayment Progress</th>
+                            <th>Total Paid (P+I)</th>
+                            <th>Start Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 500; color: #fff;">{{ loan.name }}</div>
+                            </td>
+                            <td style="font-weight: 600;">{{ loan.amount | currency }}</td>
+                            <td style="color: #4ade80; font-weight: 600;">{{ loan.current_emi_amount | currency }}</td>
+                            <td style="color: #60a5fa;">{{ loan.current_interest_portion | currency }}</td>
+                            <td style="color: #fbbf24;">{{ loan.dynamic_remaining_balance | currency }}</td>
+                            <td>
+                                <span
+                                    class="badge badge-{{ 'active' if loan.repayment_status == 'open' else 'closed' }}">
+                                    {{ loan.repayment_status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-weight: 600; color: #4ade80;">{{ loan.months_paid }}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.9rem;"> / {{ loan.total_months
+                                        }} Months</span>
+                                </div>
+                                <div
+                                    style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.25rem;">
+                                    <div
+                                        style="height: 100%; background: #4ade80; border-radius: 2px; width: {{ (loan.months_paid / loan.total_months) * 100 }}%;">
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="color: #a78bfa; font-weight: 600;">{{ (loan.months_paid * loan.emi_amount) |
+                                currency }}</td>
+                            <td>{{ loan.approved_time[:10] if loan.approved_time else 'Pending' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted)">No active loan history
+                                available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

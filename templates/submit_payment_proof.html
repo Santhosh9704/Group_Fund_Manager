@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Payment Proof - Finance App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: #ffffff;
+            color: #000000;
+            font-size: 1rem;
+        }
+
+        .form-group input[type="file"] {
+            padding: 0.5rem;
+        }
+
+        .info-box {
+            background: rgba(96, 165, 250, 0.1);
+            border-left: 4px solid #60a5fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-container {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>📸</span> Payment Proof
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <span style="color: var(--text-muted)">{{ user_name }}</span>
+                <a href="/dashboard" class="btn btn-secondary btn-sm">← Back to Dashboard</a>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <header style="margin-bottom: 2rem;">
+            <h1>Submit Payment Proof</h1>
+            <p style="color: var(--text-muted)">Upload screenshot evidence of your payment for admin verification.</p>
+        </header>
+
+        <div class="card">
+            <div class="info-box">
+                <strong>📌 Instructions:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--text-muted);">
+                    <li>Select the type of payment (Loan EMI or Monthly Savings)</li>
+                    <li>Upload a clear screenshot of your payment confirmation</li>
+                    <li>Supported formats: PNG, JPG, JPEG, GIF (Max 16MB)</li>
+                    <li>Admin will review and approve your submission</li>
+                </ul>
+            </div>
+
+            <form action="/submit_payment_proof" method="POST" enctype="multipart/form-data" id="proofForm">
+                <div class="form-group">
+                    <label for="proof_type">Payment Type *</label>
+                    <select name="proof_type" id="proof_type" required onchange="toggleProofFields()">
+                        <option value="emi">Loan EMI Payment</option>
+                        <option value="contribution">Monthly Savings Contribution</option>
+                    </select>
+                </div>
+
+                <!-- EMI FIELDS -->
+                <div id="emi_fields">
+                    {% if loans %}
+                    <div class="form-group">
+                        <label for="loan_id">Select Loan *</label>
+                        <select name="loan_id" id="loan_id" onchange="updateLoanDetails()">
+                            <option value="">-- Choose a loan --</option>
+                            {% for loan in loans %}
+                            <option value="{{ loan.loan_id }}" data-month="{{ loan.next_payment_month }}"
+                                data-emi="{{ loan.next_emi_amount }}">
+                                Loan #{{ loan.loan_id }} - ₹{{ loan.amount }} ({{ loan.total_months }} months)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="month_no">Payment Month #</label>
+                        <input type="number" name="month_no" id="month_no" readonly
+                            style="background: rgba(255,255,255,0.03); cursor: not-allowed;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount_emi">EMI Amount (₹)</label>
+                        <input type="number" name="amount_emi" id="amount_emi" readonly
+                            style="background: rgba(255,255,255,0.03); cursor: not-allowed;">
+                    </div>
+                    {% else %}
+                    <p style="color: #ef4444; margin-bottom: 1.5rem;">⚠️ You have no active loans.</p>
+                    {% endif %}
+                </div>
+
+                <!-- CONTRIBUTION FIELDS -->
+                <div id="contribution_fields" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="month">Select Month *</label>
+                            <select name="month" id="month">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="year">Select Year *</label>
+                            <select name="year" id="year">
+                                <option value="2024">2024</option>
+                                <option value="2025" selected>2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount_savings">Saving Amount (₹)</label>
+                        <input type="number" name="amount_savings" id="amount_savings" value="200" readonly
+                            style="background: rgba(255,255,255,0.03); cursor: not-allowed;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="screenshot">Upload Payment Screenshot *</label>
+                    <input type="file" name="screenshot" id="screenshot" accept="image/*" required
+                        onchange="previewImage(event)">
+                </div>
+
+                <div class="preview-container" id="previewContainer">
+                    <label>Preview:</label>
+                    <img id="imagePreview" alt="Screenshot preview">
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn" style="width: 100%; margin-top: 1rem;">
+                    📤 Submit Payment Proof
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleProofFields() {
+            const type = document.getElementById('proof_type').value;
+            const emiFields = document.getElementById('emi_fields');
+            const contributionFields = document.getElementById('contribution_fields');
+            const loanSelect = document.getElementById('loan_id');
+
+            if (type === 'emi') {
+                if (emiFields) emiFields.style.display = 'block';
+                if (contributionFields) contributionFields.style.display = 'none';
+                if (loanSelect) loanSelect.required = true;
+            } else {
+                if (emiFields) emiFields.style.display = 'none';
+                if (contributionFields) contributionFields.style.display = 'block';
+                if (loanSelect) loanSelect.required = false;
+            }
+        }
+
+        function updateLoanDetails() {
+            const select = document.getElementById('loan_id');
+            const selectedOption = select.options[select.selectedIndex];
+
+            if (selectedOption.value) {
+                document.getElementById('month_no').value = selectedOption.dataset.month;
+                document.getElementById('amount_emi').value = selectedOption.dataset.emi;
+            } else {
+                document.getElementById('month_no').value = '';
+                document.getElementById('amount_emi').value = '';
+            }
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                    document.getElementById('previewContainer').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+
+</html>

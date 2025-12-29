@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Payment Proofs - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .proof-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .proof-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .proof-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        .screenshot-container {
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .screenshot-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .screenshot-container img:hover {
+            transform: scale(1.02);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .reject-form {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+        }
+
+        .reject-form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            resize: vertical;
+            min-height: 80px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>🔍</span> Payment Proofs
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="/dashboard" class="btn btn-secondary btn-sm">← Dashboard</a>
+                <a href="/admin/loans" class="btn btn-secondary btn-sm">Loan Management</a>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <header style="margin-bottom: 2rem;">
+            <h1>Review Payment Proofs</h1>
+            <p style="color: var(--text-muted)">Review and approve member EMI payment submissions.</p>
+        </header>
+
+        {% if pending_proofs %}
+        <div class="card"
+            style="background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; margin-bottom: 2rem;">
+            <h3>⚠️ Pending Reviews: {{ pending_proofs|length }}</h3>
+        </div>
+
+        {% for proof in pending_proofs %}
+        <div class="proof-card">
+            <div class="proof-header">
+                <div>
+                    <h3 style="margin: 0; color: white;">{{ proof.name }}</h3>
+                    <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;">
+                        Submitted: {{ proof.submission_date[:16] }}
+                    </p>
+                </div>
+                <span class="badge badge-pending">Pending Review</span>
+            </div>
+
+            <div class="proof-details">
+                {% if proof.proof_type == 'emi' %}
+                <div class="detail-item">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value" style="color: #60a5fa;">🏠 Loan EMI</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Loan Info</span>
+                    <span class="detail-value">#{{ proof.loan_id }} ({{ proof.loan_amount | currency }})</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Installment</span>
+                    <span class="detail-value">Month #{{ proof.month_no }}</span>
+                </div>
+                {% else %}
+                <div class="detail-item">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value" style="color: #fbbf24;">💰 Monthly Saving</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">For Period</span>
+                    <span class="detail-value">Month {{ proof.month }}, {{ proof.year }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Proof Amount</span>
+                    <span class="detail-value" style="color: #4ade80;">{{ proof.amount | currency }}</span>
+                </div>
+            </div>
+
+            <div class="screenshot-container">
+                <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Payment Screenshot:</p>
+                <img src="{{ url_for('static', filename=proof.screenshot_path.replace('static/', '')) }}"
+                    alt="Payment proof" onclick="window.open(this.src, '_blank')">
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                    Click image to view full size
+                </p>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/approve_payment_proof/{{ proof.proof_id }}" class="btn"
+                    style="background: var(--success); flex: 1;"
+                    onclick="return confirm('Approve this payment? This will record the payment and update the fund balance.')">
+                    ✅ Approve Payment
+                </a>
+                <button class="btn btn-danger" style="flex: 1;" onclick="toggleRejectForm({{ proof.proof_id }})">
+                    ❌ Reject
+                </button>
+            </div>
+
+            <div class="reject-form" id="rejectForm{{ proof.proof_id }}">
+                <form action="/reject_payment_proof/{{ proof.proof_id }}" method="POST">
+                    <label style="display: block; margin-bottom: 0.5rem; color: white;">
+                        Reason for Rejection (Optional):
+                    </label>
+                    <textarea name="admin_notes" placeholder="Enter reason for rejection..."></textarea>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button type="submit" class="btn btn-danger btn-sm">Confirm Rejection</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="toggleRejectForm({{ proof.proof_id }})">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% else %}
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <h3 style="color: var(--text-muted);">✅ All Caught Up!</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                No pending payment proofs to review at this time.
+            </p>
+            <a href="/dashboard" class="btn">Return to Dashboard</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleRejectForm(proofId) {
+            const form = document.getElementById('rejectForm' + proofId);
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

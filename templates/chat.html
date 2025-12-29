@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Chat - Finance App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">💬 Community Chat</div>
+            <a href="/dashboard" class="btn btn-secondary btn-sm">← Back</a>
+        </nav>
+
+        <div class="card" style="height: 60vh; display: flex; flex-direction: column;">
+            <div id="chat-messages"
+                style="flex-grow: 1; overflow-y: auto; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                {% for msg in messages %}
+                <div style="margin-bottom: 1rem; text-align: {{ 'right' if msg.member_id == user_id else 'left' }};">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); mb: 2px;">{{ msg.name }} • {{
+                        msg.timestamp[11:16] }}</div>
+                    <div
+                        style="display: inline-block; padding: 10px 15px; border-radius: 12px; background: {{ 'var(--primary)' if msg.member_id == user_id else 'rgba(255,255,255,0.1)' }}; color: white; max-width: 80%;">
+                        {{ msg.content }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <form action="/send_message" method="POST" style="padding: 1rem; display: flex; gap: 10px;">
+                <input type="text" name="content" placeholder="Type a message..." required style="flex-grow: 1;">
+                <button type="submit" class="btn">Send</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    </script>
+</body>
+
+</html>

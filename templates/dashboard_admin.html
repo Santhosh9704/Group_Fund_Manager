@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Finance App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>🛡️</span> Admin Panel
+            </div>
+            <a href="/admin/manage_payments" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem;">🔧
+                Manage Payments</a>
+            <a href="/chat" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem;">💬 Community Chat</a>
+            <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+        </nav>
+
+        <!-- Financial Overview -->
+        <h2 style="margin-bottom: 1rem;">Financial Overview</h2>
+        <div class="card-grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Total Savings</span>
+                    <span class="stat-value" style="color: #fbbf24;">{{ balance | currency }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Total Collections</span>
+                    <span class="stat-value" style="color: #60a5fa;">{{ total_collections | currency }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Loans Issued</span>
+                    <span class="stat-value" style="color: #f87171;">{{ total_loans_issued | currency }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Interest Earned</span>
+                    <span class="stat-value" style="color: #4ade80;">{{ total_interest | currency }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Pending Loan Bal.</span>
+                    <span class="stat-value" style="color: #6366f1;">{{ total_pending_principal | currency }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Overview -->
+        <div class="card-grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 2rem;">
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Active Loans</span>
+                    <span class="stat-value">{{ active_loans_count }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Closed Loans</span>
+                    <span class="stat-value">{{ closed_loans_count }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Pending Contrib.</span>
+                    <span class="stat-value" style="color: #f87171;">{{ pending_contributions_count }}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted)">Current Month</span>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="margin-bottom: 1rem;">Quick Actions</h2>
+        <div class="card-grid">
+
+            <!-- Loan Management Module Link -->
+            <div class="card"
+                style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🤝</div>
+                <h3>Loan Management</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Approvals & Interest
+                    Records</p>
+                <a href="/admin/loans" class="btn" style="width: 100%; margin-bottom: 0.5rem;">Manage Loans</a>
+                <a href="/loan_tracking" class="btn btn-secondary btn-sm" style="width: 100%;">View Transparency
+                    Board</a>
+            </div>
+
+            <!-- Payment Proofs Review -->
+            <div class="card"
+                style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(145deg, rgba(96,165,250,0.1), rgba(96,165,250,0.05)); border: 1px solid rgba(96,165,250,0.3);">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📸</div>
+                <h3>Payment Proofs</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Review Member Submissions
+                </p>
+                <a href="/admin/payment_proofs" class="btn" style="width: 100%; background: #60a5fa;">Review Proofs</a>
+            </div>
+
+            <!-- View Contribution Matrix Link -->
+            <div class="card"
+                style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(145deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05)); border: 1px solid rgba(34,197,94,0.3);">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                <h3>Contribution Status</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">View & Update Monthly
+                    Status</p>
+                <a href="/contribution_tracking" class="btn" style="width: 100%; background: #22c55e;">Manage
+                    Contributions</a>
+            </div>
+
+            <div class="card">
+                <h3>Add New Member</h3>
+                <form action="/add_member" method="POST" style="margin-top: 1rem; display: grid; gap: 0.5rem;">
+                    <input type="text" name="name" placeholder="Full Name" required>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" name="username" placeholder="Username" required>
+                        <input type="text" name="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-sm">Add Member</button>
+                </form>
+            </div>
+        </div>
+
+
+
+
+        <div class="card">
+            <h3>Recent Contributions</h3>
+            <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Period</th>
+                            <th>Amount</th>
+                            <th>Paid Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contributions %}
+                        <tr>
+                            <td>{{ c.name }}</td>
+                            <td>{{ c.month }} / {{ c.year }}</td>
+                            <td>{{ c.amount | currency }}</td>
+                            <td>{% if c.paid_date %}{{ c.paid_date[:10] }}{% else %}<span
+                                    style="color: var(--text-muted);">Pending</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

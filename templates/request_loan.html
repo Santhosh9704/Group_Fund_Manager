@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Loan - Finance App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .calculator-summary {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .summary-row.total {
+            margin-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>🏦</span> FinanceGroup
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <span style="color: var(--text-muted)">Welcome, {{ user_name }}</span>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <a href="/dashboard" class="back-link">
+            <span>←</span> Back to Dashboard
+        </a>
+
+        <div style="max-width: 600px; margin: 0 auto;">
+            <div class="card">
+                <header style="margin-bottom: 1.5rem; text-align: center;">
+                    <h2>Request a New Loan</h2>
+                    <p style="color: var(--text-muted)">Get instant funds with simple repayment terms</p>
+                </header>
+
+                <form action="/request_loan" method="POST" id="loanForm">
+                    <div class="form-group">
+                        <label>Loan Amount (₹)</label>
+                        <input type="number" name="amount" id="amount" required min="500" max="100000"
+                            placeholder="Enter amount (e.g. 5000)" value="5000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Repayment Duration (Months)</label>
+                        <input type="number" name="months" id="months" required min="1" max="24" value="6">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            <span>Min: 1 Month</span>
+                            <span>Max: 24 Months</span>
+                        </div>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Principal Portion (Monthly)</span>
+                        <span id="principalPortion">₹833.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>First Month Interest (1%)</span>
+                        <span id="interestPortion">₹50.00</span>
+                    </div>
+                    <div class="summary-row total"
+                        style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                        <span>First Month EMI (Reducing Balance)</span>
+                        <span id="monthlyEMI" style="color: #60a5fa;">₹883.00</span>
+                    </div>
+                    <div class="summary-row"
+                        style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.8rem;">
+                        <span>Total Repayment ({{ months }} Months)</span>
+                        <span id="totalPayable">₹5,300.00</span>
+                    </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button type="submit" class="btn" style="width: 100%; padding: 1rem;">Submit
+                    Application</button>
+            </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        const amountInput = document.getElementById('amount');
+        const monthsInput = document.getElementById('months');
+        const principalPortionEl = document.getElementById('principalPortion');
+        const interestPortionEl = document.getElementById('interestPortion');
+        const monthlyEMIEl = document.getElementById('monthlyEMI');
+        const totalPayableEl = document.getElementById('totalPayable');
+
+        function updateCalculator() {
+            const amount = parseFloat(amountInput.value) || 0;
+            const months = parseFloat(monthsInput.value) || 1;
+            const rate = 1; // 1%
+
+            // 1. Calculate First Month Stats for Display
+            const principalConstant = amount / months;
+            const firstMonthInterest = (amount * rate) / 100;
+            const firstMonthEMI = principalConstant + firstMonthInterest;
+
+            // 2. Loop to calculate Total Repayment (Reducing Balance)
+            let totalPayable = 0;
+            let currentPrincipal = amount;
+
+            for (let i = 0; i < months; i++) {
+                // Interest for this month
+                let interest = (currentPrincipal * rate) / 100;
+                // EMI for this month
+                let emi = principalConstant + interest;
+
+                totalPayable += emi;
+
+                // Reduce principal for next month
+                currentPrincipal -= principalConstant;
+            }
+
+            principalPortionEl.textContent = '₹' + principalConstant.toFixed(2);
+            interestPortionEl.textContent = '₹' + firstMonthInterest.toFixed(2);
+            monthlyEMIEl.textContent = '₹' + firstMonthEMI.toFixed(2);
+            totalPayableEl.textContent = '₹' + totalPayable.toFixed(2);
+        }
+
+        amountInput.addEventListener('input', updateCalculator);
+        monthsInput.addEventListener('input', updateCalculator);
+
+        // Initial setup
+        updateCalculator();
+    </script>
+</body>
+
+</html>

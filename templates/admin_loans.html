@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Management - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: #222;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span>🛡️</span> Admin Panel
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="/dashboard" class="btn btn-secondary btn-sm">← Back to Dashboard</a>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <header style="margin-bottom: 2rem;">
+            <h1>Loan Management</h1>
+            <p style="color: var(--text-muted)">Manage requests, approvals, and interest payments.</p>
+        </header>
+
+        <!-- Stats Row -->
+        <div class="card-grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Pending Approvals</span>
+                    <span class="stat-value" style="color: #fbbf24;">{{ pending_count }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Active Loans Value</span>
+                    <span class="stat-value" style="color: #4ade80;">{{ total_active_principal | currency }}</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-card">
+                    <span class="stat-label">Interest This Month</span>
+                    <span class="stat-value" style="color: #60a5fa;">{{ interest_collected_month | currency }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Requests Section -->
+        {% if pending_loans %}
+        <div class="card" style="margin-bottom: 2rem; border-left: 4px solid #fbbf24;">
+            <div class="section-header">
+                <h3>⚠️ Pending Requests ({{ pending_loans|length }})</h3>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Amount</th>
+                            <th>Duration</th>
+                            <th>Monthly Interest</th>
+                            <th>Requested On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in pending_loans %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ loan.name }}</td>
+                            <td style="color: white; font-size: 1.1rem;">{{ loan.amount | currency }}</td>
+                            <td>{{ loan.total_months }} Months</td>
+                            <td>{{ loan.interest_per_month | currency }}</td>
+                            <td>{{ loan.request_time[:10] }}</td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="/approve_loan/{{ loan.loan_id }}" class="btn btn-sm"
+                                        style="background: var(--success); text-decoration: none;">Approve</a>
+                                    <a href="/reject_loan/{{ loan.loan_id }}" class="btn btn-sm btn-danger"
+                                        style="text-decoration: none;">Reject</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Active Loans Section -->
+        <div class="card">
+            <div class="section-header">
+                <h3>Active Loans</h3>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Amount</th>
+                            <th>EMI (P+I)</th>
+                            <th>Remaining Bal</th>
+                            <th>Status</th>
+                            <th>Record EMI Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in active_loans %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 500; color: #fff;">{{ loan.name }}</div>
+                            </td>
+                            <td>{{ loan.amount | currency }}</td>
+                            <td style="color: #4ade80; font-weight: 600;">
+                                {{ loan.next_emi_amount | currency }}
+                                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: normal;">(Next
+                                    Month)</div>
+                            </td>
+                            <td style="color: #fbbf24;">{{ loan.remaining_balance | currency }}</td>
+                            <td>
+                                <span class="badge badge-active">Active</span>
+                            </td>
+                            <td>
+                                <form action="/update_interest" method="POST" style="display: flex; gap: 0.5rem;">
+                                    <input type="hidden" name="loan_id" value="{{ loan.loan_id }}">
+                                    <input type="number" name="month_no" placeholder="Mo #"
+                                        value="{{ loan.next_payment_month }}"
+                                        style="width: 60px; padding: 0.3rem; border-radius: 4px; border: 1px solid #444; background: #222; color: white;"
+                                        required>
+                                    <input type="number" name="amount" value="{{ loan.next_emi_amount }}"
+                                        placeholder="EMI Amount"
+                                        style="width: 100px; padding: 0.3rem; border-radius: 4px; border: 1px solid #444; background: #222; color: white;"
+                                        required>
+                                    <button type="submit" class="btn btn-sm">Pay</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted)">No active loans.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

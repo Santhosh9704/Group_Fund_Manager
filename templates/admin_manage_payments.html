@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Transaction - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .tab-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">🛡️ Admin Management</div>
+            <a href="/dashboard" class="btn btn-secondary btn-sm">← Dashboard</a>
+        </nav>
+
+        <header>
+            <h1>Member Transactions</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <p style="color: var(--text-muted)">Edit or Delete contributions and loan payments. <b>Balances update
+                        dynamically.</b></p>
+                <a href="/admin/export_transactions" class="btn btn-sm" style="background: #22c55e;">📥 Export to
+                    Excel</a>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div
+            style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; border-radius: 8px; margin-bottom: 1rem;">
+            {{ messages[0] }}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="section" style="margin-bottom: 3rem;">
+            <h2 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Monthly
+                Contributions</h2>
+            <div id="contributions">
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Period</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in contributions %}
+                            <tr>
+                                <td>{{ c.name }}</td>
+                                <td>{{ c.month }}/{{ c.year }}</td>
+                                <td>{{ c.amount | currency }}</td>
+                                <td><span class="badge badge-paid">{{ c.status }}</span></td>
+                                <td>
+                                    <form action="/admin/delete_contribution/{{ c.id }}" method="POST"
+                                        onsubmit="return confirm('Delete this record? Balance will update dynamically.');">
+                                        <button type="submit" class="btn-delete">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Loan
+                Payments</h2>
+            <div id="loans">
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Loan ID</th>
+                                <th>Month No</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in interest_payments %}
+                            <tr>
+                                <td>{{ p.name }}</td>
+                                <td>#{{ p.loan_id }}</td>
+                                <td>Month {{ p.month_no }}</td>
+                                <td>{{ p.amount | currency }}</td>
+                                <td>
+                                    <form action="/admin/delete_interest/{{ p.id }}" method="POST"
+                                        onsubmit="return confirm('Delete this payment? Loan balance will update dynamically.');">
+                                        <button type="submit" class="btn-delete">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
