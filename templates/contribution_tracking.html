@@ -139,19 +139,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for m in members %}
+                    {% for m in tracking_data %}
                     <tr>
                         <td style="font-weight: 500; color: white;">{{ m.name }}</td>
 
                         {% for month in range(1, 13) %}
-                        {% set data = m.months[month] %}
+                        {% set status = m.status_by_month[month] %}
                         <td>
-                            {% if data.status == 'paid' %}
+                            {% if status == 'paid' %}
                             <div class="cell-paid"
                                 style="display: flex; gap: 5px; align-items: center; justify-content: center;">
                                 <span class="status-icon">✅</span>
                                 <form action="/update_contribution_status" method="POST" style="display: inline;">
-                                    <input type="hidden" name="member_id" value="{{ m.member_id }}">
+                                    <input type="hidden" name="member_id" value="{{ m.id }}">
                                     <input type="hidden" name="month" value="{{ month }}">
                                     <input type="hidden" name="year" value="{{ selected_year }}">
                                     <input type="hidden" name="action" value="unpay">
@@ -160,12 +160,12 @@
                                         title="Mark as Unpaid">❌</button>
                                 </form>
                             </div>
-                            {% elif data.status == 'pending' %}
+                            {% elif status == 'pending' %}
                             <div class="cell-unpaid"
                                 style="display: flex; gap: 5px; align-items: center; justify-content: center;">
                                 <span class="status-icon">⏳</span>
                                 <form action="/update_contribution_status" method="POST" style="display: inline;">
-                                    <input type="hidden" name="member_id" value="{{ m.member_id }}">
+                                    <input type="hidden" name="member_id" value="{{ m.id }}">
                                     <input type="hidden" name="month" value="{{ month }}">
                                     <input type="hidden" name="year" value="{{ selected_year }}">
                                     <input type="hidden" name="action" value="pay">
@@ -174,7 +174,7 @@
                             </div>
                             {% else %}
                             <form action="/update_contribution_status" method="POST">
-                                <input type="hidden" name="member_id" value="{{ m.member_id }}">
+                                <input type="hidden" name="member_id" value="{{ m.id }}">
                                 <input type="hidden" name="month" value="{{ month }}">
                                 <input type="hidden" name="year" value="{{ selected_year }}">
                                 <input type="hidden" name="action" value="pay">
