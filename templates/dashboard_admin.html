@@ -30,7 +30,9 @@
             <div class="card">
                 <div class="stat-card">
                     <span class="stat-label">Total Savings</span>
-                    <span class="stat-value" style="color: #fbbf24;">{{ balance | currency }}</span>
+                    <span class="stat-value" style="color: #fbbf24;">{{ balance | currency }} 
+                        <button onclick="document.getElementById('editBalanceModal').style.display='block'" style="background:none; border:none; cursor:pointer; font-size:1rem;">✏️</button>
+                    </span>
                 </div>
             </div>
             <div class="card">
@@ -163,6 +165,33 @@
         </div>
 
     </div>
+
+    <!-- Edit Balance Modal -->
+    <div id="editBalanceModal" class="modal" style="display:none; position:fixed; z-index:1; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.4);">
+        <div class="modal-content" style="background-color: var(--card-bg); margin: 15% auto; padding: 20px; border: 1px solid var(--border-color); width: 80%; max-width: 400px; border-radius: 12px; position:relative;">
+            <span onclick="document.getElementById('editBalanceModal').style.display='none'" style="color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer;">&times;</span>
+            <h3 style="margin-bottom: 1rem;">Update Starting Fund</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">This updates the base fund balance. The total displayed will include collections and interest.</p>
+            <form action="/admin/update_fund_balance" method="POST">
+                <input type="number" name="amount" step="0.01" placeholder="Enter new base amount" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-dark); color: var(--text-light);" required>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn" style="flex:1;">Update</button>
+                    <button type="button" onclick="document.getElementById('editBalanceModal').style.display='none'" class="btn btn-secondary" style="flex:1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Close modal if clicked outside
+        window.onclick = function(event) {
+            var modal = document.getElementById('editBalanceModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+
 </body>
 
 </html>
