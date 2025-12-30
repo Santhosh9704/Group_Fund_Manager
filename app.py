@@ -478,10 +478,14 @@ def submit_payment_proof():
             loan_id = request.form.get("loan_id")
             month_no = request.form.get("month_no")
             amount = request.form.get("amount_emi")
+            month = None
+            year = None
         else:
             loan_id = None
             month_no = None
             amount = 200
+            month = request.form.get("month")
+            year = request.form.get("year")
             
         file = request.files['screenshot']
         if file and allowed_file(file.filename):
@@ -490,9 +494,9 @@ def submit_payment_proof():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             
-            db.execute("""INSERT INTO payment_proofs (proof_type, loan_id, member_id, month_no, amount, screenshot_path, status, submission_date) 
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                       (proof_type, loan_id, session["user_id"], month_no, amount, filepath, 'pending', datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            db.execute("""INSERT INTO payment_proofs (proof_type, loan_id, member_id, month_no, month, year, amount, screenshot_path, status, submission_date) 
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       (proof_type, loan_id, session["user_id"], month_no, month, year, amount, filepath, 'pending', datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             db.commit()
             flash("Proof submitted successfully!")
             return redirect(url_for("dashboard"))
