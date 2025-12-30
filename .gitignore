@@ -4,3 +4,4 @@ __pycache__/
 database.db
 .env
 .DS_Store
+static/uploads/
