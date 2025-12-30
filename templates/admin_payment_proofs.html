@@ -163,7 +163,7 @@
 
             <div class="screenshot-container">
                 <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Payment Screenshot:</p>
-                <img src="{{ url_for('static', filename=proof.screenshot_path.replace('static/', '')) }}"
+                <img src="{{ url_for('static', filename=proof.screenshot_path.replace('static/', '').replace('static\\', '')) }}"
                     alt="Payment proof" onclick="window.open(this.src, '_blank')">
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
                     Click image to view full size
