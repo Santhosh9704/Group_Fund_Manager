@@ -392,11 +392,41 @@ def update_interest():
     
     loan_id = request.form["loan_id"]
     month_no = request.form["month_no"]
-    amount = request.form["amount"]
+    amount = float(request.form["amount"])
     
     db = get_db()
+    loan = db.execute("SELECT * FROM loans WHERE loan_id=?", (loan_id,)).fetchone()
+    
+    if not loan:
+        flash("Loan not found")
+        return redirect(url_for("admin_loans"))
+        
+    # Calculate components
+    current_balance = loan['remaining_balance']
+    interest_rate = loan['interest_rate_percent']
+    
+    interest_component = (current_balance * interest_rate) / 100
+    principal_component = amount - interest_component
+    
+    new_balance = current_balance - principal_component
+    
+    status_update = "open"
+    if new_balance <= 1: # Tolerance for float rounding
+        new_balance = 0
+        status_update = "closed"
+        
+    # Record the payment
     db.execute("INSERT INTO interest_payments (loan_id, month_no, amount, status, paid_date) VALUES (?, ?, ?, ?, ?)",
                (loan_id, month_no, amount, 'paid', datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+               
+    # Update Loan Balance and Status
+    if status_update == "closed":
+        db.execute("UPDATE loans SET remaining_balance=?, repayment_status='closed', closed_time=? WHERE loan_id=?", 
+                   (new_balance, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), loan_id))
+    else:
+        db.execute("UPDATE loans SET remaining_balance=? WHERE loan_id=?", 
+                   (new_balance, loan_id))
+        
     db.commit()
     
     return redirect(url_for("admin_loans"))
@@ -650,7 +680,32 @@ def approve_payment_proof(proof_id):
     
     if proof and proof['status'] == 'pending':
         if proof['proof_type'] == 'emi':
-            # Add to interest payments
+            # Logic similar to update_interest
+            loan = db.execute("SELECT * FROM loans WHERE loan_id=?", (proof['loan_id'],)).fetchone()
+            if loan:
+                current_balance = loan['remaining_balance']
+                interest_rate = loan['interest_rate_percent']
+                
+                # Interest for this payment (simplified assumption: payment covers full month interest)
+                interest_component = (current_balance * interest_rate) / 100
+                principal_component = proof['amount'] - interest_component
+                
+                new_balance = current_balance - principal_component
+                
+                status_update = "open"
+                if new_balance <= 1:
+                    new_balance = 0
+                    status_update = "closed"
+                    
+                # Update Loan
+                if status_update == "closed":
+                     db.execute("UPDATE loans SET remaining_balance=?, repayment_status='closed', closed_time=? WHERE loan_id=?", 
+                                (new_balance, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), proof['loan_id']))
+                else:
+                     db.execute("UPDATE loans SET remaining_balance=? WHERE loan_id=?", 
+                                (new_balance, proof['loan_id']))
+                                
+            # Add to interest payments logs
             db.execute("INSERT INTO interest_payments (loan_id, month_no, amount, status, paid_date) VALUES (?,?,?,?,?)",
                        (proof['loan_id'], proof['month_no'], proof['amount'], 'paid', datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         elif proof['proof_type'] == 'contribution':
