@@ -171,7 +171,7 @@
             </div>
 
             <div class="action-buttons">
-                <a href="/approve_payment_proof/{{ proof.proof_id }}" class="btn"
+                <a href="/admin/approve_payment_proof/{{ proof.proof_id }}" class="btn"
                     style="background: var(--success); flex: 1;"
                     onclick="return confirm('Approve this payment? This will record the payment and update the fund balance.')">
                     ✅ Approve Payment
@@ -182,7 +182,7 @@
             </div>
 
             <div class="reject-form" id="rejectForm{{ proof.proof_id }}">
-                <form action="/reject_payment_proof/{{ proof.proof_id }}" method="POST">
+                <form action="/admin/reject_payment_proof/{{ proof.proof_id }}" method="POST">
                     <label style="display: block; margin-bottom: 0.5rem; color: white;">
                         Reason for Rejection (Optional):
                     </label>
